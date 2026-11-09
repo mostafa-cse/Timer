@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary SEO Meta Tags -->
+  <title>Timer — Native Top Bar & Tray Countdown Timer for Ubuntu, macOS & Windows</title>
+  <meta name="title" content="Timer — Native Top Bar & Tray Countdown Timer for Ubuntu, macOS & Windows">
+  <meta name="description" content="Free, open-source, ultra-efficient desktop countdown timer and Pomodoro tracker for Ubuntu (GNOME), macOS, and Windows. Displays live Hour:minutes:seconds in your top bar and system tray with desktop notifications and sound alerts.">
+  <meta name="keywords" content="timer, countdown timer, pomodoro timer, ubuntu top bar timer, gnome timer, macos menu bar timer, windows system tray timer, desktop timer app, productivity timer, open source timer">
+  <meta name="author" content="mostafa-cse">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mostafa-cse.github.io/Timer/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mostafa-cse.github.io/Timer/">
+  <meta property="og:title" content="Timer — Native Top Bar & System Tray Countdown Timer">
+  <meta property="og:description" content="Ultra-efficient countdown timer for Ubuntu, macOS, and Windows. Shows live HH:MM:SS in the top panel with notifications & sound alerts.">
+  <meta property="og:image" content="https://mostafa-cse.github.io/Timer/assets/timer.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://mostafa-cse.github.io/Timer/">
+  <meta property="twitter:title" content="Timer — Native Top Bar & System Tray Countdown Timer">
+  <meta property="twitter:description" content="Ultra-efficient countdown timer for Ubuntu, macOS, and Windows. Shows live HH:MM:SS in the top panel with notifications & sound alerts.">
+  <meta property="twitter:image" content="https://mostafa-cse.github.io/Timer/assets/timer.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/timer.svg">
+  <link rel="icon" type="image/png" href="assets/timer.png">
+  <link rel="shortcut icon" href="assets/timer.ico">
+
+  <!-- Structured Data (JSON-LD) for Google Search Rich Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Timer",
+    "operatingSystem": "Linux, macOS, Windows",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "High-efficiency, drift-free desktop countdown timer and Pomodoro tracker with live top bar and system tray integration.",
+    "url": "https://mostafa-cse.github.io/Timer/",
+    "downloadUrl": "https://github.com/mostafa-cse/Timer/releases",
+    "softwareVersion": "1.0.0",
+    "author": {
+      "@type": "Person",
+      "name": "mostafa-cse"
+    }
+  }
+  </script>
+
+  <!-- Google Fonts & Tailwind CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              orange: '#E95420',
+              purple: '#77216F',
+              dark: '#0f111a',
+              card: '#181b26',
+              border: '#2a2e3d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b0d14;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .gradient-glow {
+      background: radial-gradient(circle at 50% -20%, rgba(233, 84, 32, 0.25), rgba(119, 33, 111, 0.15), transparent 70%);
+    }
+    .glass-nav {
+      background: rgba(15, 17, 26, 0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-orange-500 selection:text-white">
+
+  <!-- Glowing background effect -->
+  <div class="fixed inset-0 gradient-glow pointer-events-none z-0"></div>
+
+  <!-- Header / Navigation -->
+  <header class="sticky top-0 z-50 glass-nav">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3 font-bold text-xl tracking-tight text-white hover:opacity-90 transition">
+        <img src="assets/timer.svg" alt="Timer Logo" class="w-8 h-8 rounded-lg shadow-md shadow-orange-500/20">
+        <span>Timer</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-mono">v1.0.0</span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#features" class="hover:text-white transition">Features</a>
+        <a href="#demo" class="hover:text-white transition">Live Demo</a>
+        <a href="#downloads" class="hover:text-white transition">Downloads</a>
+        <a href="#faq" class="hover:text-white transition">FAQ</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/mostafa-cse/Timer" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/10 transition shadow-sm">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="relative z-10">
+    <section class="pt-20 pb-16 px-6 text-center max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold mb-6">
+        <span>⚡ Cross-Platform: Ubuntu • macOS • Windows</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-tight sm:leading-none mb-6">
+        The Minimalist, Native <br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">
+          Top Bar Countdown Timer
+        </span>
+      </h1>
+
+      <p class="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Stay focused without clutter. Shows live <span class="font-mono text-orange-300 font-bold">HH:MM:SS</span> directly in your Ubuntu Top Panel, macOS Menu Bar, or Windows System Tray with audible alerts and desktop notifications.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="#downloads"
+           class="px-8 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 shadow-lg shadow-orange-500/25 transition transform hover:-translate-y-0.5">
+          Download Free (v1.0.0)
+        </a>
+        <a href="#demo"
+           class="px-6 py-3.5 rounded-xl font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 transition">
+          Try Live Demo
+        </a>
+      </div>
+    </section>
+
+    <!-- Interactive Live Web Demo Component -->
+    <section id="demo" class="max-w-xl mx-auto px-6 mb-24">
+      <div class="p-8 rounded-3xl bg-[#131620] border border-slate-800 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="text-center mb-6">
+          <div class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-2">Live Top Bar Preview</div>
+          <div id="timerDisplay" class="font-mono text-5xl sm:text-6xl font-extrabold text-orange-400 tracking-wider mb-2">
+            00:25:00
+          </div>
+          <div id="statusBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="statusText">Ready</span>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-6">
+          <div id="progressBar" class="bg-gradient-to-r from-orange-500 to-pink-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <button id="toggleBtn" onclick="toggleTimer()"
+                  class="w-full py-3 rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-500 transition shadow">
+            ▶ Start
+          </button>
+          <button onclick="resetTimer()"
+                  class="w-full py-3 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition">
+            ⏹ Reset
+          </button>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="text-xs font-semibold text-slate-400 mb-3 text-center">Quick Presets:</div>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="setDuration(300)" class="py-2 text-xs font-semibold rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition">☕ 5m</button>
+          <button onclick="setDuration(600)" class="py-2 text-xs font-semibold rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition">🍵 10m</button>
+          <button onclick="setDuration(1500)" class="py-2 text-xs font-semibold rounded-lg bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition">🍅 25m</button>
+          <button onclick="setDuration(3600)" class="py-2 text-xs font-semibold rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition">⏱ 1h</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Grid -->
+    <section id="features" class="max-w-6xl mx-auto px-6 mb-24">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Engineered for Focus & Efficiency</h2>
+        <p class="text-slate-400 max-w-xl mx-auto">Built from the ground up to respect system resources while offering seamless desktop integration.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="p-8 rounded-2xl bg-[#131620] border border-slate-800 hover:border-orange-500/30 transition group">
+          <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-6 group-hover:scale-110 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Live Top Bar Display</h3>
+          <p class="text-slate-400 leading-relaxed text-sm">
+            Displays <span class="font-mono text-orange-300">Hour:minutes:seconds</span> directly on your top panel. No floating windows covering your code or workspace.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-8 rounded-2xl bg-[#131620] border border-slate-800 hover:border-pink-500/30 transition group">
+          <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 mb-6 group-hover:scale-110 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Desktop Notifications & Sound</h3>
+          <p class="text-slate-400 leading-relaxed text-sm">
+            Full-urgency notifications keep alerts in your system tray until acknowledged, accompanied by standard non-jarring audio chimes.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-8 rounded-2xl bg-[#131620] border border-slate-800 hover:border-purple-500/30 transition group">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">0.0% Idle CPU Usage</h3>
+          <p class="text-slate-400 leading-relaxed text-sm">
+            Zero heavy webviews or bloated runtimes. Powered by native event loops with drift-free monotonic clock accuracy across system sleeps.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Downloads Section -->
+    <section id="downloads" class="max-w-5xl mx-auto px-6 mb-24">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Download for Your OS</h2>
+        <p class="text-slate-400">Version 1.0.0 is open source, free, and ready to install.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Ubuntu / Linux Card -->
+        <div class="p-6 rounded-2xl bg-[#131620] border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">🐧</div>
+            <h3 class="text-xl font-bold text-white mb-1">Ubuntu / Linux</h3>
+            <p class="text-xs text-slate-400 mb-6">Ubuntu 22.04+, Debian, GNOME Shell</p>
+            <div class="bg-black/40 rounded-xl p-3 font-mono text-xs text-slate-300 mb-6 border border-slate-800">
+              sudo apt install ./timer_1.0.0_all.deb
+            </div>
+          </div>
+          <a href="https://github.com/mostafa-cse/Timer/releases/latest"
+             class="w-full text-center py-2.5 rounded-xl font-semibold bg-orange-600 hover:bg-orange-500 text-white transition text-sm">
+            Download .deb Package
+          </a>
+        </div>
+
+        <!-- Windows Card -->
+        <div class="p-6 rounded-2xl bg-[#131620] border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">🪟</div>
+            <h3 class="text-xl font-bold text-white mb-1">Windows</h3>
+            <p class="text-xs text-slate-400 mb-6">Windows 10 / 11 (64-bit)</p>
+            <div class="bg-black/40 rounded-xl p-3 font-mono text-xs text-slate-300 mb-6 border border-slate-800">
+              Extract & run Timer.exe
+            </div>
+          </div>
+          <a href="https://github.com/mostafa-cse/Timer/releases/latest"
+             class="w-full text-center py-2.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-white transition text-sm">
+            Download for Windows (.zip)
+          </a>
+        </div>
+
+        <!-- macOS Card -->
+        <div class="p-6 rounded-2xl bg-[#131620] border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">🍎</div>
+            <h3 class="text-xl font-bold text-white mb-1">macOS</h3>
+            <p class="text-xs text-slate-400 mb-6">macOS Monterey, Ventura, Sonoma</p>
+            <div class="bg-black/40 rounded-xl p-3 font-mono text-xs text-slate-300 mb-6 border border-slate-800">
+              Drag Timer.app to Applications
+            </div>
+          </div>
+          <a href="https://github.com/mostafa-cse/Timer/releases/latest"
+             class="w-full text-center py-2.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-white transition text-sm">
+            Download for macOS (.zip)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="max-w-3xl mx-auto px-6 mb-24">
+      <h2 class="text-3xl font-extrabold text-white mb-8 text-center">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        <details class="p-6 rounded-2xl bg-[#131620] border border-slate-800 group" open>
+          <summary class="font-bold text-white cursor-pointer list-none flex justify-between items-center">
+            <span>How does the live top bar display work on Ubuntu?</span>
+            <span class="text-orange-400 transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="text-slate-400 text-sm mt-4 leading-relaxed">
+            Timer utilizes the native StatusNotifierItem / Ayatana AppIndicator protocol directly in GNOME Shell. It dynamically updates the panel label without requiring any external extensions or session restarts.
+          </p>
+        </details>
+
+        <details class="p-6 rounded-2xl bg-[#131620] border border-slate-800 group">
+          <summary class="font-bold text-white cursor-pointer list-none flex justify-between items-center">
+            <span>Does Timer keep counting if my laptop goes to sleep?</span>
+            <span class="text-orange-400 transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="text-slate-400 text-sm mt-4 leading-relaxed">
+            Yes. Timer uses monotonic clock timestamps instead of counting simple ticks. When the computer resumes, it calculates exact elapsed real-world time without drift.
+          </p>
+        </details>
+
+        <details class="p-6 rounded-2xl bg-[#131620] border border-slate-800 group">
+          <summary class="font-bold text-white cursor-pointer list-none flex justify-between items-center">
+            <span>Can I control the timer via terminal or keyboard scripts?</span>
+            <span class="text-orange-400 transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="text-slate-400 text-sm mt-4 leading-relaxed">
+            Yes! You can run <code class="text-orange-300 font-mono">timer 25m</code>, add time with <code class="text-orange-300 font-mono">timer +5m</code>, or toggle pause/resume with <code class="text-orange-300 font-mono">timer --toggle</code>.
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-12 px-6 text-center text-sm text-slate-500">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2 font-medium text-slate-400">
+        <img src="assets/timer.svg" alt="Timer" class="w-5 h-5">
+        <span>Timer &copy; 2026. Released under the MIT License.</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/mostafa-cse/Timer" class="hover:text-slate-300 transition">GitHub Repo</a>
+        <a href="https://github.com/mostafa-cse/Timer/releases" class="hover:text-slate-300 transition">Releases</a>
+        <a href="https://github.com/mostafa-cse/Timer/issues" class="hover:text-slate-300 transition">Issues</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Live Demo Script -->
+  <script>
+    let remaining = 1500;
+    let initial = 1500;
+    let timerId = null;
+    let isRunning = false;
+
+    function formatTime(s) {
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function updateUI() {
+      document.getElementById('timerDisplay').innerText = formatTime(remaining);
+      const pct = initial > 0 ? ((initial - remaining) / initial) * 100 : 0;
+      document.getElementById('progressBar').style.width = pct + '%';
+
+      const toggleBtn = document.getElementById('toggleBtn');
+      const statusText = document.getElementById('statusText');
+
+      if (isRunning) {
+        toggleBtn.innerText = '⏸ Pause';
+        statusText.innerText = 'Running';
+      } else if (remaining === 0) {
+        toggleBtn.innerText = '▶ Restart';
+        statusText.innerText = 'Finished!';
+      } else if (remaining < initial) {
+        toggleBtn.innerText = '▶ Resume';
+        statusText.innerText = 'Paused';
+      } else {
+        toggleBtn.innerText = '▶ Start';
+        statusText.innerText = 'Ready';
+      }
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerId);
+        isRunning = false;
+      } else {
+        if (remaining <= 0) remaining = initial;
+        isRunning = true;
+        timerId = setInterval(() => {
+          if (remaining > 0) {
+            remaining--;
+            updateUI();
+          } else {
+            clearInterval(timerId);
+            isRunning = false;
+            updateUI();
+          }
+        }, 1000);
+      }
+      updateUI();
+    }
+
+    function resetTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+      remaining = initial;
+      updateUI();
+    }
+
+    function setDuration(secs) {
+      clearInterval(timerId);
+      isRunning = false;
+      initial = secs;
+      remaining = secs;
+      updateUI();
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
