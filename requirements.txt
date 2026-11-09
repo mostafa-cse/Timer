@@ -1,0 +1,15 @@
+# Core dependencies
+pillow>=10.0.0
+
+# Linux / Ubuntu
+# Note: On Ubuntu, system GTK/DBus bindings are provided by:
+# sudo apt install python3-gi gir1.2-gtk-3.0 python3-dbus libnotify-bin
+
+# Windows (optional / for building Windows standalone app)
+pystray>=0.19.5; sys_platform == 'win32'
+
+# macOS (optional / for building macOS status bar app)
+pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'
+
+# Build tools
+pyinstaller>=6.0.0

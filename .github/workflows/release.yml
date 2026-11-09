@@ -1,0 +1,143 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # =========================================================================
+  # 1. LINUX / UBUNTU BUILD (.deb & standalone tar.gz)
+  # =========================================================================
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-gtk-3.0 libnotify-bin dpkg-dev
+          pip install --upgrade pip pyinstaller pillow
+
+      - name: Build Debian (.deb) Package
+        run: |
+          chmod +x build_deb.sh
+          ./build_deb.sh
+
+      - name: Build Standalone Linux Executable
+        run: |
+          pyinstaller --onefile --windowed --name timer --add-data "assets:assets" run.py
+          mkdir -p dist/linux
+          cp dist/timer dist/linux/
+          cp -r assets dist/linux/
+          tar -czvf Timer-linux-x86_64.tar.gz -C dist/linux timer assets
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            *.deb
+            Timer-linux-x86_64.tar.gz
+
+  # =========================================================================
+  # 2. WINDOWS BUILD (.exe & zip)
+  # =========================================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Windows dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow pystray
+
+      - name: Build Windows Executable
+        run: |
+          pyinstaller --onefile --noconsole --name "Timer" --icon "assets/timer.ico" --add-data "assets;assets" run.py
+          Compress-Archive -Path dist/Timer.exe, assets -DestinationPath Timer-windows-x64.zip
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: Timer-windows-x64.zip
+
+  # =========================================================================
+  # 3. MACOS BUILD (.app & zip)
+  # =========================================================================
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install macOS dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install pyinstaller pillow pyobjc-framework-Cocoa
+
+      - name: Build macOS App
+        run: |
+          pyinstaller --windowed --name "Timer" --icon "assets/timer.png" --add-data "assets:assets" run.py
+          cd dist
+          zip -r ../Timer-macos.zip Timer.app
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: Timer-macos.zip
+
+  # =========================================================================
+  # 4. GITHUB RELEASE (Triggered on tags e.g. v1.0.0)
+  # =========================================================================
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release_assets
+          find . -name "*.deb" -exec cp {} release_assets/ \;
+          find . -name "*.tar.gz" -exec cp {} release_assets/ \;
+          find . -name "*.zip" -exec cp {} release_assets/ \;
+          ls -la release_assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false

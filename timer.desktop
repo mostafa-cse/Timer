@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Timer
+GenericName=Countdown Timer & Pomodoro
+Comment=Live top bar countdown timer in Hour:minutes:seconds with desktop notifications
+Exec=/home/m0stafa/.local/bin/timer
+Icon=/home/m0stafa/.local/share/icons/hicolor/scalable/apps/timer.svg
+Terminal=false
+Categories=Utility;Clock;
+Keywords=timer;countdown;alarm;pomodoro;clock;topbar;
+StartupNotify=true
+X-GNOME-UsesNotifications=true
