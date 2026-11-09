@@ -1,6 +1,12 @@
 # ⏱ Timer
 
+[![Website](https://img.shields.io/badge/Website-mostafa--cse.github.io%2FTimer-orange?style=flat&logo=googlechrome&logoColor=white)](https://mostafa-cse.github.io/Timer/)
+[![Release](https://img.shields.io/github/v/release/mostafa-cse/Timer?color=blue&logo=github)](https://github.com/mostafa-cse/Timer/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Timer** is an ultra-efficient, lightweight, cross-platform countdown timer and Pomodoro tracker built for **Ubuntu / Linux**, **macOS**, and **Windows**.
+
+🌐 **Official Website & Live Demo**: [https://mostafa-cse.github.io/Timer/](https://mostafa-cse.github.io/Timer/)
 
 It provides native top bar / menu bar / system tray integration displaying live **`Hour:minutes:seconds` (`HH:MM:SS`)**, along with audible alerts and rich desktop notifications when your timer finishes.
 
