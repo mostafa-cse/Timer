@@ -84,29 +84,35 @@ def create_tray(controller):
                     action_label = "▶ Start Timer"
 
                 sound_enabled = self.controller.config.get("sound_enabled", True)
-                sound_label = f"🔔 Sound Alert ({'ON' if sound_enabled else 'OFF'})"
+                sound_label = f"Sound Alert ({'ON' if sound_enabled else 'OFF'})"
                 autostart_active = self.controller.is_autostart_enabled()
-                autostart_label = f"🚀 Start on Login ({'ON' if autostart_active else 'OFF'})"
+                autostart_label = f"Start on Login ({'ON' if autostart_active else 'OFF'})"
 
                 self.icon.menu = pystray.Menu(
-                    pystray.MenuItem("🎛 Open Timer Window", self.controller.show_window),
+                    pystray.MenuItem("🎛 Open Control Center", self.controller.show_window),
                     pystray.MenuItem(action_label, self.controller.on_action_toggle),
                     pystray.MenuItem("⏹ Reset Timer", self.controller.on_action_reset),
                     pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("➕ Add 1 Minute", lambda: engine.add_seconds(60)),
-                    pystray.MenuItem("➕ Add 5 Minutes", lambda: engine.add_seconds(300)),
-                    pystray.MenuItem("➕ Add 10 Minutes", lambda: engine.add_seconds(600)),
+                    pystray.MenuItem("+ Add Time", pystray.Menu(
+                        pystray.MenuItem("+ 1 Minute", lambda: engine.add_seconds(60)),
+                        pystray.MenuItem("+ 5 Minutes", lambda: engine.add_seconds(300)),
+                        pystray.MenuItem("+ 10 Minutes", lambda: engine.add_seconds(600)),
+                        pystray.MenuItem("+ 15 Minutes", lambda: engine.add_seconds(900)),
+                    )),
+                    pystray.MenuItem("⚡ Quick Presets", pystray.Menu(
+                        pystray.MenuItem("5 Min (Break)", lambda: engine.set_duration(300, auto_start=True)),
+                        pystray.MenuItem("15 Min (Session)", lambda: engine.set_duration(900, auto_start=True)),
+                        pystray.MenuItem("25 Min (Pomodoro)", lambda: engine.set_duration(1500, auto_start=True)),
+                        pystray.MenuItem("45 Min (Deep Work)", lambda: engine.set_duration(2700, auto_start=True)),
+                        pystray.MenuItem("1 Hour (Focus)", lambda: engine.set_duration(3600, auto_start=True)),
+                        pystray.MenuItem("2 Hours (Extended)", lambda: engine.set_duration(7200, auto_start=True)),
+                    )),
+                    pystray.MenuItem("⚙ Settings", pystray.Menu(
+                        pystray.MenuItem(sound_label, self.controller.toggle_sound),
+                        pystray.MenuItem(autostart_label, self.controller.toggle_autostart),
+                    )),
                     pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("☕ 5 Min (Break)", lambda: engine.set_duration(300, auto_start=True)),
-                    pystray.MenuItem("⚡ 15 Minutes", lambda: engine.set_duration(900, auto_start=True)),
-                    pystray.MenuItem("🍅 25 Min (Pomodoro)", lambda: engine.set_duration(1500, auto_start=True)),
-                    pystray.MenuItem("🎯 45 Min (Deep Work)", lambda: engine.set_duration(2700, auto_start=True)),
-                    pystray.MenuItem("⏱ 1 Hour", lambda: engine.set_duration(3600, auto_start=True)),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem(sound_label, self.controller.toggle_sound),
-                    pystray.MenuItem(autostart_label, self.controller.toggle_autostart),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("❌ Quit", self.controller.quit_app)
+                    pystray.MenuItem("Quit Timer", self.controller.quit_app)
                 )
 
             def register(self):

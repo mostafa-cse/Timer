@@ -4,7 +4,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BUILD_ROOT="$DIR/build/deb_package"
 PACKAGE_NAME="timer"
-VERSION="1.1.0"
+VERSION="1.1.1"
 DEB_FILENAME="${PACKAGE_NAME}_${VERSION}_all.deb"
 
 echo "=========================================================="
@@ -21,7 +21,7 @@ mkdir -p "$BUILD_ROOT/usr/share/icons/hicolor/scalable/apps"
 # 1. DEBIAN/control
 cat << 'EOF' > "$BUILD_ROOT/DEBIAN/control"
 Package: timer
-Version: 1.1.0
+Version: 1.1.1
 Section: utils
 Priority: optional
 Architecture: all

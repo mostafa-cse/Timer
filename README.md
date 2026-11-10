@@ -31,9 +31,9 @@ It provides native top bar / menu bar / system tray integration displaying live 
 
 #### Installation via `.deb` package:
 ```bash
-sudo apt install ./timer_1.1.0_all.deb
+sudo apt install ./timer_1.1.1_all.deb
 # or
-sudo dpkg -i ./timer_1.1.0_all.deb
+sudo dpkg -i ./timer_1.1.1_all.deb
 ```
 
 #### User Installation (no `sudo` required):
@@ -82,8 +82,8 @@ sudo dpkg -i ./timer_1.1.0_all.deb
 
 This repository includes a multi-platform CI/CD release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)).
 
-Whenever a version tag is pushed (e.g., `v1.1.0`), GitHub Actions automatically:
-1. Builds the **Ubuntu `.deb` package** (`timer_1.1.0_all.deb`) and Linux tarball.
+Whenever a version tag is pushed (e.g., `v1.1.1`), GitHub Actions automatically:
+1. Builds the **Ubuntu `.deb` package** (`timer_1.1.1_all.deb`) and Linux tarball.
 2. Builds the **Windows single-file executable** (`Timer-windows-x64.zip`).
 3. Builds the **macOS Application bundle** (`Timer-macos.zip`).
 4. Creates a new **GitHub Release** and publishes all artifacts automatically!
@@ -97,8 +97,8 @@ git remote add origin https://github.com/YOUR_USERNAME/Timer.git
 git push -u origin main
 
 # 3. Create and push a version tag to trigger automated release
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
 ---

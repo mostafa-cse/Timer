@@ -141,27 +141,30 @@ class TestTimerDBusMenu(unittest.TestCase):
         rev, layout = self.menu.GetLayout(0, -1, [])
         self.assertEqual(layout[0], 0)  # root ID
         children = layout[2]
-        # Should have header, actions, add-time buttons, presets, settings, quit, separators
-        self.assertGreater(len(children), 10)
-
-        # Check direct buttons exist
+        # Should have clean, minimal root structure with submenus
         ids = [c[0] for c in children]
         self.assertIn(1, ids)   # Header
         self.assertIn(3, ids)   # Action toggle
         self.assertIn(4, ids)   # Reset
-        self.assertIn(51, ids)  # Add 1m
-        self.assertIn(52, ids)  # Add 5m
-        self.assertIn(61, ids)  # 5m preset
-        self.assertIn(63, ids)  # 25m preset
-        self.assertIn(71, ids)  # Sound toggle
-        self.assertIn(72, ids)  # Autostart toggle
-        self.assertIn(81, ids)  # Open Window
-        self.assertIn(11, ids)  # Quit
+        self.assertIn(50, ids)  # Add Time submenu
+        self.assertIn(60, ids)  # Presets submenu
+        self.assertIn(80, ids)  # Open Control Center
+        self.assertIn(70, ids)  # Settings submenu
+        self.assertIn(99, ids)  # Quit
+
+        # Check submenu children
+        all_ids = list(self.menu._items_map.keys())
+        self.assertIn(51, all_ids)  # Add 1m
+        self.assertIn(52, all_ids)  # Add 5m
+        self.assertIn(61, all_ids)  # 5m preset
+        self.assertIn(63, all_ids)  # 25m preset
+        self.assertIn(71, all_ids)  # Sound toggle
+        self.assertIn(72, all_ids)  # Autostart toggle
 
     def test_get_layout_parent_id(self):
         rev, layout = self.menu.GetLayout(0, -1, [])
         self.assertEqual(layout[0], 0)
-        self.assertGreater(len(layout[2]), 10)
+        self.assertGreater(len(layout[2]), 5)
 
     def test_action_toggle_and_state_label(self):
         # 1. Initially IDLE -> label is "▶ Start Timer"
@@ -223,11 +226,11 @@ class TestTimerDBusMenu(unittest.TestCase):
 
     def test_open_window_and_quit(self):
         self.assertFalse(self.ctrl.window_shown)
-        self.menu.Event(81, "clicked", 0, 0)
+        self.menu.Event(80, "clicked", 0, 0)
         self.assertTrue(self.ctrl.window_shown)
 
         self.assertFalse(self.ctrl.quit_called)
-        self.menu.Event(11, "clicked", 0, 0)
+        self.menu.Event(99, "clicked", 0, 0)
         self.assertTrue(self.ctrl.quit_called)
 
     def test_about_to_show_updates_properties(self):

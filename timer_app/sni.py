@@ -68,64 +68,70 @@ class TimerDBusMenu(dbus.service.Object):
         task_info = f" ({engine.task_name})" if engine.task_name else ""
 
         if state == TimerState.RUNNING:
-            status_text = f"⏱ Running: {time_str}{task_info}"
+            status_text = f"⏱ {time_str}  •  Running{task_info}"
             action_label = "⏸ Pause Timer"
         elif state == TimerState.PAUSED:
-            status_text = f"⏸ Paused: {time_str}{task_info}"
+            status_text = f"⏸ {time_str}  •  Paused{task_info}"
             action_label = "▶ Resume Timer"
         elif state == TimerState.FINISHED:
-            status_text = f"⏰ Finished! (00:00:00){task_info}"
+            status_text = f"🔔 Time's Up! (00:00:00){task_info}"
             action_label = "▶ Restart Timer"
         else:
-            status_text = f"⏱ Timer: {time_str} [Ready]{task_info}"
+            status_text = f"○ {time_str}  •  Ready{task_info}"
             action_label = "▶ Start Timer"
 
         sound_enabled = self.controller.config.get("sound_enabled", True)
-        sound_label = f"🔔 Sound Alert ({'ON' if sound_enabled else 'OFF'})"
+        sound_label = f"Sound Alert ({'ON' if sound_enabled else 'OFF'})"
 
         autostart_active = self.controller.is_autostart_enabled()
-        autostart_label = f"🚀 Start on Login ({'ON' if autostart_active else 'OFF'})"
+        autostart_label = f"Start on Login ({'ON' if autostart_active else 'OFF'})"
 
         root = DBusMenuItem(0)
 
-        # 1. Header / Status
+        # 1. Header / Status (clean, executive typography)
         root.add_child(DBusMenuItem(1, label=status_text, enabled=False))
         root.add_child(DBusMenuItem(2, item_type="separator"))
 
-        # 2. Main control action (Start / Pause / Resume / Restart)
+        # 2. Main control actions
         root.add_child(DBusMenuItem(3, label=action_label, callback=self.controller.on_action_toggle))
         root.add_child(DBusMenuItem(4, label="⏹ Reset Timer", callback=self.controller.on_action_reset))
         root.add_child(DBusMenuItem(5, item_type="separator"))
 
-        # 3. Direct Add Time (Immediate 1-click response, no unresponsive submenus)
-        root.add_child(DBusMenuItem(51, label="➕ Add 1 Minute", callback=lambda: engine.add_seconds(60)))
-        root.add_child(DBusMenuItem(52, label="➕ Add 5 Minutes", callback=lambda: engine.add_seconds(300)))
-        root.add_child(DBusMenuItem(53, label="➕ Add 10 Minutes", callback=lambda: engine.add_seconds(600)))
-        root.add_child(DBusMenuItem(6, item_type="separator"))
+        # 3. Add Time Submenu
+        add_menu = DBusMenuItem(50, label="+ Add Time")
+        add_menu.add_child(DBusMenuItem(51, label="+ 1 Minute", callback=lambda: engine.add_seconds(60)))
+        add_menu.add_child(DBusMenuItem(52, label="+ 5 Minutes", callback=lambda: engine.add_seconds(300)))
+        add_menu.add_child(DBusMenuItem(53, label="+ 10 Minutes", callback=lambda: engine.add_seconds(600)))
+        add_menu.add_child(DBusMenuItem(54, label="+ 15 Minutes", callback=lambda: engine.add_seconds(900)))
+        root.add_child(add_menu)
 
-        # 4. Direct Quick Presets (Immediate 1-click launch)
+        # 4. Presets Submenu
+        pres_menu = DBusMenuItem(60, label="⚡ Quick Presets")
         presets = [
-            (61, "☕ 5 Min (Break)", 300),
-            (62, "⚡ 15 Minutes", 900),
-            (63, "🍅 25 Min (Pomodoro)", 1500),
-            (64, "🎯 45 Min (Deep Work)", 2700),
-            (65, "⏱ 1 Hour", 3600),
+            (61, "5 Min (Break)", 300),
+            (62, "15 Min (Session)", 900),
+            (63, "25 Min (Pomodoro)", 1500),
+            (64, "45 Min (Deep Work)", 2700),
+            (65, "1 Hour (Focus)", 3600),
+            (66, "2 Hours (Extended)", 7200),
         ]
         for p_id, p_label, p_secs in presets:
-            root.add_child(DBusMenuItem(p_id, label=p_label, callback=lambda s=p_secs: engine.set_duration(s, auto_start=True)))
+            pres_menu.add_child(DBusMenuItem(p_id, label=p_label, callback=lambda s=p_secs: engine.set_duration(s, auto_start=True)))
+        root.add_child(pres_menu)
         root.add_child(DBusMenuItem(7, item_type="separator"))
 
-        # 5. Direct Settings (Immediate 1-click toggles)
-        root.add_child(DBusMenuItem(71, label=sound_label, toggle_type="checkmark", toggle_state=1 if sound_enabled else 0, callback=self.controller.toggle_sound))
-        root.add_child(DBusMenuItem(72, label=autostart_label, toggle_type="checkmark", toggle_state=1 if autostart_active else 0, callback=self.controller.toggle_autostart))
-        root.add_child(DBusMenuItem(8, item_type="separator"))
+        # 5. Open Control Center Window
+        root.add_child(DBusMenuItem(80, label="🎛 Open Control Center...", callback=self.controller.show_window))
 
-        # 6. Open Control Center GUI
-        root.add_child(DBusMenuItem(81, label="🎛 Open Timer Window...", callback=self.controller.show_window))
-        root.add_child(DBusMenuItem(10, item_type="separator"))
+        # 6. Settings Submenu
+        settings_menu = DBusMenuItem(70, label="⚙ Settings")
+        settings_menu.add_child(DBusMenuItem(71, label=sound_label, toggle_type="checkmark", toggle_state=1 if sound_enabled else 0, callback=self.controller.toggle_sound))
+        settings_menu.add_child(DBusMenuItem(72, label=autostart_label, toggle_type="checkmark", toggle_state=1 if autostart_active else 0, callback=self.controller.toggle_autostart))
+        root.add_child(settings_menu)
+        root.add_child(DBusMenuItem(90, item_type="separator"))
 
         # 7. Quit
-        root.add_child(DBusMenuItem(11, label="❌ Quit Timer", callback=self.controller.quit_app))
+        root.add_child(DBusMenuItem(99, label="Quit Timer", callback=self.controller.quit_app))
 
         # Map IDs
         self._items_map = {}
@@ -234,19 +240,18 @@ class TimerDBusMenu(dbus.service.Object):
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="i", out_signature="b")
     def AboutToShow(self, item_id):
-        self._build_menu_tree()
-        self._emit_properties_updated()
-        # Return False to indicate the submenu layout structure has not changed.
-        # Returning True causes GNOME Shell to reload the layout and collapse the submenu!
+        # When root menu opens (item_id == 0), refresh properties so state is up-to-date.
+        # For submenus (item_id > 0), do not mutate the tree so GNOME Shell can display smoothly.
+        if item_id == 0:
+            self._build_menu_tree()
+            self._emit_properties_updated()
         return dbus.Boolean(False)
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="ai", out_signature="aiai")
     def AboutToShowGroup(self, ids):
-        self._build_menu_tree()
-        self._emit_properties_updated()
         # First list: IDs needing layout updates (none).
         # Second list: IDs not needing layout updates (all requested).
-        return ([], list(ids))
+        return (dbus.Array([], signature="i"), dbus.Array([dbus.Int32(x) for x in ids], signature="i"))
 
     @dbus.service.signal("com.canonical.dbusmenu", signature="ui")
     def LayoutUpdated(self, revision, parent):

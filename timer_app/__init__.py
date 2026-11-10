@@ -2,7 +2,7 @@
 Ubuntu Top Bar Timer Application Package
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 from timer_app.core import TimerEngine, TimerState
 from timer_app.app import TimerApp
