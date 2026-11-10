@@ -10,13 +10,15 @@ from timer_app.core import TimerState
 
 
 class DBusMenuItem:
-    def __init__(self, item_id, label="", item_type="standard", enabled=True, visible=True, callback=None):
+    def __init__(self, item_id, label="", item_type="standard", enabled=True, visible=True, callback=None, toggle_type=None, toggle_state=0):
         self.item_id = item_id
         self.label = label
         self.item_type = item_type
         self.enabled = enabled
         self.visible = visible
         self.callback = callback
+        self.toggle_type = toggle_type
+        self.toggle_state = toggle_state
         self.children = []
 
     def add_child(self, child):
@@ -34,6 +36,11 @@ class DBusMenuItem:
 
         if self.children:
             d["children-display"] = dbus.String("submenu")
+
+        if self.toggle_type:
+            d["toggle-type"] = dbus.String(self.toggle_type)
+            d["toggle-state"] = dbus.Int32(1 if self.toggle_state else 0)
+
         return dbus.Dictionary(d, signature="sv")
 
     def to_layout_struct(self):
@@ -51,6 +58,8 @@ class TimerDBusMenu(dbus.service.Object):
         self.controller = controller
         self.revision = 1
         self._items_map = {}
+        # Pre-populate items map immediately
+        self._build_menu_tree()
 
     def _build_menu_tree(self):
         engine = self.controller.engine
@@ -72,10 +81,10 @@ class TimerDBusMenu(dbus.service.Object):
             action_label = "▶ Start Timer"
 
         sound_enabled = self.controller.config.get("sound_enabled", True)
-        sound_label = f"🔔 Sound: {'ON' if sound_enabled else 'OFF'}"
+        sound_label = f"🔔 Sound Alert ({'ON' if sound_enabled else 'OFF'})"
 
         autostart_active = self.controller.is_autostart_enabled()
-        autostart_label = f"🚀 Start on Boot: {'ON' if autostart_active else 'OFF'}"
+        autostart_label = f"🚀 Start on Login ({'ON' if autostart_active else 'OFF'})"
 
         root = DBusMenuItem(0)
 
@@ -83,45 +92,36 @@ class TimerDBusMenu(dbus.service.Object):
         root.add_child(DBusMenuItem(1, label=status_text, enabled=False))
         root.add_child(DBusMenuItem(2, item_type="separator"))
 
-        # 2. Main control action
+        # 2. Main control action (Start / Pause / Resume / Restart)
         root.add_child(DBusMenuItem(3, label=action_label, callback=self.controller.on_action_toggle))
         root.add_child(DBusMenuItem(4, label="⏹ Reset Timer", callback=self.controller.on_action_reset))
+        root.add_child(DBusMenuItem(5, item_type="separator"))
 
-        # 3. Add Time Submenu
-        add_menu = DBusMenuItem(5, label="➕ Add Time")
-        add_menu.add_child(DBusMenuItem(51, label="+1 Minute", callback=lambda: engine.add_seconds(60)))
-        add_menu.add_child(DBusMenuItem(52, label="+5 Minutes", callback=lambda: engine.add_seconds(300)))
-        add_menu.add_child(DBusMenuItem(53, label="+10 Minutes", callback=lambda: engine.add_seconds(600)))
-        add_menu.add_child(DBusMenuItem(54, label="+15 Minutes", callback=lambda: engine.add_seconds(900)))
-        root.add_child(add_menu)
+        # 3. Direct Add Time (Immediate 1-click response, no unresponsive submenus)
+        root.add_child(DBusMenuItem(51, label="➕ Add 1 Minute", callback=lambda: engine.add_seconds(60)))
+        root.add_child(DBusMenuItem(52, label="➕ Add 5 Minutes", callback=lambda: engine.add_seconds(300)))
+        root.add_child(DBusMenuItem(53, label="➕ Add 10 Minutes", callback=lambda: engine.add_seconds(600)))
+        root.add_child(DBusMenuItem(6, item_type="separator"))
 
-        # 4. Presets Submenu
+        # 4. Direct Quick Presets (Immediate 1-click launch)
         presets = [
-            (61, "☕ 5 Minutes (Quick Break)", 300),
-            (62, "🍵 10 Minutes (Coffee Break)", 600),
-            (63, "⚡ 15 Minutes", 900),
-            (64, "🍅 25 Minutes (Pomodoro)", 1500),
-            (65, "📚 30 Minutes", 1800),
-            (66, "🎯 45 Minutes (Deep Work)", 2700),
-            (67, "⏱ 1 Hour", 3600),
-            (68, "⏱ 2 Hours", 7200),
+            (61, "☕ 5 Min (Break)", 300),
+            (62, "⚡ 15 Minutes", 900),
+            (63, "🍅 25 Min (Pomodoro)", 1500),
+            (64, "🎯 45 Min (Deep Work)", 2700),
+            (65, "⏱ 1 Hour", 3600),
         ]
-        pres_menu = DBusMenuItem(6, label="⚡ Quick Presets")
         for p_id, p_label, p_secs in presets:
-            pres_menu.add_child(DBusMenuItem(p_id, label=p_label, callback=lambda s=p_secs: engine.set_duration(s, auto_start=True)))
-        root.add_child(pres_menu)
-
+            root.add_child(DBusMenuItem(p_id, label=p_label, callback=lambda s=p_secs: engine.set_duration(s, auto_start=True)))
         root.add_child(DBusMenuItem(7, item_type="separator"))
 
-        # 5. Open Control Center GUI
-        root.add_child(DBusMenuItem(8, label="🎛 Open Timer Window...", callback=self.controller.show_window))
+        # 5. Direct Settings (Immediate 1-click toggles)
+        root.add_child(DBusMenuItem(71, label=sound_label, toggle_type="checkmark", toggle_state=1 if sound_enabled else 0, callback=self.controller.toggle_sound))
+        root.add_child(DBusMenuItem(72, label=autostart_label, toggle_type="checkmark", toggle_state=1 if autostart_active else 0, callback=self.controller.toggle_autostart))
+        root.add_child(DBusMenuItem(8, item_type="separator"))
 
-        # 6. Settings Submenu
-        settings_menu = DBusMenuItem(9, label="⚙ Settings")
-        settings_menu.add_child(DBusMenuItem(91, label=sound_label, callback=self.controller.toggle_sound))
-        settings_menu.add_child(DBusMenuItem(92, label=autostart_label, callback=self.controller.toggle_autostart))
-        root.add_child(settings_menu)
-
+        # 6. Open Control Center GUI
+        root.add_child(DBusMenuItem(81, label="🎛 Open Timer Window...", callback=self.controller.show_window))
         root.add_child(DBusMenuItem(10, item_type="separator"))
 
         # 7. Quit
@@ -136,71 +136,142 @@ class TimerDBusMenu(dbus.service.Object):
         map_items(root)
         return root
 
+    def _emit_properties_updated(self):
+        """Notify DBusMenu clients (e.g. GNOME Shell) that item properties changed."""
+        updated = []
+        for item_id, item in self._items_map.items():
+            updated.append(dbus.Struct(
+                (dbus.Int32(item_id), item.to_dbus_dict()),
+                signature="ia{sv}"
+            ))
+        self.ItemsPropertiesUpdated(
+            dbus.Array(updated, signature="(ia{sv})"),
+            dbus.Array([], signature="(ias)")
+        )
+
     def refresh_menu(self):
         self.revision += 1
+        self._build_menu_tree()
         self.LayoutUpdated(self.revision, 0)
+        self._emit_properties_updated()
+
+    def update_tick_label(self, formatted_time):
+        """Update live countdown in dropdown menu during ticks."""
+        if 1 in self._items_map:
+            item = self._items_map[1]
+            engine = self.controller.engine
+            task_info = f" ({engine.task_name})" if engine.task_name else ""
+            if engine.state == TimerState.RUNNING:
+                item.label = f"⏱ Running: {formatted_time}{task_info}"
+            elif engine.state == TimerState.PAUSED:
+                item.label = f"⏸ Paused: {formatted_time}{task_info}"
+            elif engine.state == TimerState.FINISHED:
+                item.label = f"⏰ Finished! (00:00:00){task_info}"
+            else:
+                item.label = f"⏱ Timer: {formatted_time} [Ready]{task_info}"
+
+            updated = [dbus.Struct((dbus.Int32(1), item.to_dbus_dict()), signature="ia{sv}")]
+            self.ItemsPropertiesUpdated(
+                dbus.Array(updated, signature="(ia{sv})"),
+                dbus.Array([], signature="(ias)")
+            )
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
     def GetLayout(self, parent_id, recursion_depth, property_names):
         root = self._build_menu_tree()
-        layout_struct = root.to_layout_struct()
-        return dbus.UInt32(self.revision), layout_struct
+        parent_id = int(parent_id)
+        if parent_id == 0 or parent_id not in self._items_map:
+            target_item = root
+        else:
+            target_item = self._items_map[parent_id]
+        return dbus.UInt32(self.revision), target_item.to_layout_struct()
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="aias", out_signature="a(ia{sv})")
     def GetGroupProperties(self, ids, property_names):
+        if not self._items_map:
+            self._build_menu_tree()
         res = []
         for i in ids:
-            item = self._items_map.get(i)
+            item = self._items_map.get(int(i))
             if item:
-                res.append(dbus.Struct((dbus.Int32(i), item.to_dbus_dict()), signature="ia{sv}"))
+                res.append(dbus.Struct((dbus.Int32(int(i)), item.to_dbus_dict()), signature="ia{sv}"))
         return res
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="is", out_signature="v")
     def GetProperty(self, item_id, name):
-        item = self._items_map.get(item_id)
+        if not self._items_map:
+            self._build_menu_tree()
+        item = self._items_map.get(int(item_id))
         if item:
             d = item.to_dbus_dict()
-            return d.get(name, "")
+            if name in d:
+                return d[name]
         return ""
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="isvu", out_signature="")
     def Event(self, item_id, event_id, data, timestamp):
+        item_id = int(item_id)
+        if not self._items_map:
+            self._build_menu_tree()
         if event_id == "clicked":
             item = self._items_map.get(item_id)
             if item and item.callback:
-                item.callback()
+                try:
+                    item.callback()
+                except Exception as e:
+                    print(f"[TopBarTimer] Error in menu callback for item {item_id}: {e}")
                 self.refresh_menu()
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="a(isvu)", out_signature="ai")
     def EventGroup(self, events):
         errors = []
         for e in events:
-            self.Event(e[0], e[1], e[2], e[3])
+            try:
+                self.Event(e[0], e[1], e[2], e[3])
+            except Exception:
+                errors.append(e[0])
         return errors
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="i", out_signature="b")
     def AboutToShow(self, item_id):
-        return True
+        self._build_menu_tree()
+        self._emit_properties_updated()
+        # Return False to indicate the submenu layout structure has not changed.
+        # Returning True causes GNOME Shell to reload the layout and collapse the submenu!
+        return dbus.Boolean(False)
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="ai", out_signature="aiai")
     def AboutToShowGroup(self, ids):
-        return (list(ids), [])
+        self._build_menu_tree()
+        self._emit_properties_updated()
+        # First list: IDs needing layout updates (none).
+        # Second list: IDs not needing layout updates (all requested).
+        return ([], list(ids))
 
     @dbus.service.signal("com.canonical.dbusmenu", signature="ui")
     def LayoutUpdated(self, revision, parent):
         pass
 
+    @dbus.service.signal("com.canonical.dbusmenu", signature="a(ia{sv})a(ias)")
+    def ItemsPropertiesUpdated(self, updated_props, removed_props):
+        pass
+
 
 class StatusNotifierTimerItem(dbus.service.Object):
-    def __init__(self, bus, controller):
+    def __init__(self, bus, controller, bus_name=None, path="/StatusNotifierItem"):
         self.bus = bus
         self.controller = controller
         self.engine = controller.engine
+        self.path = path
 
-        self.bus_name = dbus.service.BusName("org.kde.StatusNotifierItem-ubuntu-topbar-timer", bus)
-        super().__init__(self.bus_name, "/StatusNotifierItem")
+        if bus_name is None:
+            self.bus_name = dbus.service.BusName("org.kde.StatusNotifierItem-ubuntu-topbar-timer", bus)
+        else:
+            self.bus_name = bus_name
+        super().__init__(self.bus_name, path)
 
-        self.menu = TimerDBusMenu(self.bus_name, "/MenuBar", controller)
+        menu_path = "/MenuBar" if path == "/StatusNotifierItem" else f"{path}_MenuBar"
+        self.menu = TimerDBusMenu(self.bus_name, menu_path, controller)
         self.current_label = self.engine.get_formatted_time()
 
     def register(self):
@@ -219,7 +290,10 @@ class StatusNotifierTimerItem(dbus.service.Object):
             self.XAyatanaNewLabel(new_label, "00:00:00")
             self.PropertiesChanged(
                 "org.kde.StatusNotifierItem",
-                dbus.Dictionary({"XAyatanaLabel": dbus.String(new_label)}, signature="sv"),
+                dbus.Dictionary({
+                    "XAyatanaLabel": dbus.String(new_label),
+                    "Title": dbus.String(f"Timer ({new_label})")
+                }, signature="sv"),
                 dbus.Array([], signature="s")
             )
 
@@ -230,18 +304,22 @@ class StatusNotifierTimerItem(dbus.service.Object):
     @dbus.service.method("com.ubuntu.TopBarTimer", in_signature="ib", out_signature="")
     def SetDuration(self, seconds, auto_start):
         self.engine.set_duration(seconds, auto_start=auto_start)
+        self.menu.refresh_menu()
 
     @dbus.service.method("com.ubuntu.TopBarTimer", in_signature="i", out_signature="")
     def AddSeconds(self, seconds):
         self.engine.add_seconds(seconds)
+        self.menu.refresh_menu()
 
     @dbus.service.method("com.ubuntu.TopBarTimer", in_signature="", out_signature="")
     def Toggle(self):
         self.controller.on_action_toggle()
+        self.menu.refresh_menu()
 
     @dbus.service.method("com.ubuntu.TopBarTimer", in_signature="", out_signature="")
     def Reset(self):
         self.controller.on_action_reset()
+        self.menu.refresh_menu()
 
     @dbus.service.method("com.ubuntu.TopBarTimer", in_signature="", out_signature="")
     def ShowGUI(self):
@@ -250,13 +328,14 @@ class StatusNotifierTimerItem(dbus.service.Object):
     @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
         if interface == "org.kde.StatusNotifierItem":
+            assets_path = str(self.controller.assets_dir)
             return {
                 "Category": dbus.String("ApplicationStatus"),
                 "Id": dbus.String("ubuntu-topbar-timer"),
                 "Title": dbus.String(f"Timer ({self.current_label})"),
                 "Status": dbus.String("Active"),
                 "IconName": dbus.String("alarm-symbolic"),
-                "IconThemePath": dbus.String(""),
+                "IconThemePath": dbus.String(assets_path),
                 "ItemIsMenu": dbus.Boolean(False),
                 "Menu": dbus.ObjectPath("/MenuBar"),
                 "XAyatanaLabel": dbus.String(self.current_label),
@@ -271,20 +350,22 @@ class StatusNotifierTimerItem(dbus.service.Object):
 
     @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii", out_signature="")
     def ContextMenu(self, x, y):
-        pass
+        self.menu.refresh_menu()
 
     @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii", out_signature="")
     def SecondaryActivate(self, x, y):
         # Middle click / secondary click: toggle Start / Pause
         self.controller.on_action_toggle()
+        self.menu.refresh_menu()
 
     @dbus.service.method("org.kde.StatusNotifierItem", in_signature="is", out_signature="")
     def Scroll(self, delta, orientation):
-        # Mouse wheel on indicator scrolls time +1 min / -1 min
-        if delta > 0:
+        # In GNOME smooth scrolling: scroll UP is delta < 0, scroll DOWN is delta > 0
+        if delta < 0:
             self.engine.add_seconds(60)
         else:
             self.engine.add_seconds(-60)
+        self.menu.refresh_menu()
 
     @dbus.service.signal("org.kde.StatusNotifierItem", signature="ss")
     def XAyatanaNewLabel(self, label, guide):

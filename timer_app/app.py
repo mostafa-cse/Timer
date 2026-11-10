@@ -66,6 +66,8 @@ class TimerApp:
         # Update top bar dynamic label with exact Hour:minutes:seconds
         if hasattr(self.tray, "update_label"):
             self.tray.update_label(formatted_time)
+        if hasattr(self.tray, "menu") and hasattr(self.tray.menu, "update_tick_label"):
+            self.tray.menu.update_tick_label(formatted_time)
 
     def on_state_changed(self, old_state, new_state):
         if hasattr(self.tray, "menu") and hasattr(self.tray.menu, "refresh_menu"):
@@ -96,13 +98,20 @@ class TimerApp:
         self.engine.start()
 
     def toggle_window(self):
-        if hasattr(self.window, "is_visible") and self.window.is_visible():
+        is_vis = False
+        if hasattr(self.window, "get_visible"):
+            is_vis = self.window.get_visible()
+        elif hasattr(self.window, "is_visible"):
+            is_vis = self.window.is_visible()
+
+        if is_vis:
             self.window.hide()
         else:
             self.show_window()
 
     def show_window(self):
         if HAS_GTK:
+            self.window.deiconify()
             self.window.show_all()
             self.window.present()
         else:
@@ -116,24 +125,36 @@ class TimerApp:
             if enabled:
                 AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)
                 desktop_source = Path(__file__).resolve().parent.parent / "timer.desktop"
+                exec_cmd = f"{Path.home()}/.local/bin/timer --minimized"
                 if desktop_source.exists():
-                    content = desktop_source.read_text(encoding="utf-8")
+                    lines = desktop_source.read_text(encoding="utf-8").splitlines()
+                    out = []
+                    for line in lines:
+                        if line.startswith("Exec="):
+                            out.append(f"Exec={exec_cmd}")
+                        else:
+                            out.append(line)
+                    if "X-GNOME-Autostart-enabled" not in "".join(out):
+                        out.append("X-GNOME-Autostart-enabled=true")
+                    content = "\n".join(out) + "\n"
                 else:
-                    exec_path = sys.executable + " " + str(Path(__file__).resolve().parent.parent / "run.py") + " --minimized"
                     content = f"""[Desktop Entry]
 Type=Application
 Name=Timer
 Comment=Top Bar Countdown Timer
-Exec={exec_path}
+Exec={exec_cmd}
 Icon=alarm-symbolic
 Terminal=false
-Categories=Utility;
+Categories=Utility;Clock;
 X-GNOME-Autostart-enabled=true
 """
                 AUTOSTART_FILE.write_text(content, encoding="utf-8")
             else:
                 if AUTOSTART_FILE.exists():
                     AUTOSTART_FILE.unlink()
+            if hasattr(self.window, "chk_autostart"):
+                if self.window.chk_autostart.get_active() != enabled:
+                    self.window.chk_autostart.set_active(enabled)
             if hasattr(self.tray, "menu") and hasattr(self.tray.menu, "refresh_menu"):
                 self.tray.menu.refresh_menu()
         except Exception as e:
@@ -149,12 +170,15 @@ X-GNOME-Autostart-enabled=true
     def set_sound(self, enabled):
         self.config.set("sound_enabled", enabled)
         if hasattr(self.window, "chk_sound"):
-            self.window.chk_sound.set_active(enabled)
+            if self.window.chk_sound.get_active() != enabled:
+                self.window.chk_sound.set_active(enabled)
         if hasattr(self.tray, "menu") and hasattr(self.tray.menu, "refresh_menu"):
             self.tray.menu.refresh_menu()
 
     def quit_app(self):
         print("[TimerApp] Quitting Timer.")
+        if hasattr(self.engine, "_stop_glib_source"):
+            self.engine._stop_glib_source()
         if HAS_GTK:
             Gtk.main_quit()
         elif hasattr(self.window, "root"):

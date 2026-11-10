@@ -53,14 +53,23 @@ class TimerEngine:
             if hasattr(l, "on_finished"):
                 l.on_finished(self.initial_duration, self.task_name)
 
+    def _notify_duration_changed(self, seconds):
+        for l in self.listeners:
+            if hasattr(l, "on_duration_changed"):
+                l.on_duration_changed(seconds)
+
     def set_duration(self, seconds, auto_start=False):
         seconds = max(1, int(seconds))
+        old_state = self.state
         self.initial_duration = seconds
         self.remaining_seconds = seconds
         if self.state == TimerState.RUNNING:
             self.target_time = time.monotonic() + self.remaining_seconds
         else:
             self.state = TimerState.IDLE
+        if self.state != old_state:
+            self._notify_state_changed(old_state, self.state)
+        self._notify_duration_changed(self.initial_duration)
         self._notify_tick()
         if auto_start:
             self.start()
@@ -71,12 +80,18 @@ class TimerEngine:
     def add_seconds(self, seconds):
         if self.state in (TimerState.RUNNING, TimerState.PAUSED):
             self.remaining_seconds = max(1, self.remaining_seconds + seconds)
-            self.initial_duration = max(self.initial_duration, self.remaining_seconds)
+            self.initial_duration += seconds
+            if self.remaining_seconds > self.initial_duration:
+                self.initial_duration = self.remaining_seconds
             if self.state == TimerState.RUNNING:
                 self.target_time = time.monotonic() + self.remaining_seconds
+            self._notify_duration_changed(self.initial_duration)
             self._notify_tick()
-        elif self.state in (TimerState.IDLE, TimerState.FINISHED):
-            self.set_duration(self.initial_duration + seconds)
+        elif self.state == TimerState.FINISHED:
+            # If timer finished and user adds time, set to that duration and auto start
+            self.set_duration(max(1, seconds), auto_start=True)
+        else:  # IDLE
+            self.set_duration(max(1, self.initial_duration + seconds), auto_start=False)
 
     def start(self, seconds=None):
         if seconds is not None:
@@ -125,6 +140,7 @@ class TimerEngine:
         self.remaining_seconds = self.initial_duration
         self.target_time = None
         self._notify_state_changed(old_state, self.state)
+        self._notify_duration_changed(self.initial_duration)
         self._notify_tick()
 
     def _stop_glib_source(self):
@@ -138,9 +154,9 @@ class TimerEngine:
             return False
 
         now = time.monotonic()
-        remaining = int(round(self.target_time - now))
+        diff = self.target_time - now
 
-        if remaining <= 0:
+        if diff <= 0:
             self.remaining_seconds = 0
             self.state = TimerState.FINISHED
             self._stop_glib_source()
@@ -149,7 +165,7 @@ class TimerEngine:
             self._notify_state_changed(TimerState.RUNNING, self.state)
             return False
         else:
-            self.remaining_seconds = remaining
+            self.remaining_seconds = int(diff + 0.999)
             self._notify_tick()
             return True
 

@@ -4,7 +4,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BUILD_ROOT="$DIR/build/deb_package"
 PACKAGE_NAME="timer"
-VERSION="1.0.0"
+VERSION="1.1.0"
 DEB_FILENAME="${PACKAGE_NAME}_${VERSION}_all.deb"
 
 echo "=========================================================="
@@ -21,7 +21,7 @@ mkdir -p "$BUILD_ROOT/usr/share/icons/hicolor/scalable/apps"
 # 1. DEBIAN/control
 cat << 'EOF' > "$BUILD_ROOT/DEBIAN/control"
 Package: timer
-Version: 1.0.0
+Version: 1.1.0
 Section: utils
 Priority: optional
 Architecture: all
@@ -100,7 +100,7 @@ EOF
 dpkg-deb --build --root-owner-group "$BUILD_ROOT" "$DIR/$DEB_FILENAME"
 
 # Also link legacy filename for convenience
-ln -sf "$DEB_FILENAME" "$DIR/topbar-timer_1.0.0_all.deb"
+ln -sf "$DEB_FILENAME" "$DIR/topbar-timer_${VERSION}_all.deb"
 
 echo ""
 echo "✔ Successfully generated: $DIR/$DEB_FILENAME"

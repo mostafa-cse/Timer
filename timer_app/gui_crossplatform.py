@@ -1,6 +1,7 @@
 """
 Universal Cross-Platform GUI Window for Timer (Windows, macOS, fallback).
-Built using Python's standard Tkinter with a sleek dark theme.
+Built using Python's standard Tkinter with a classic dark theme combining
+Ubuntu Warm Orange (#E95420), crisp pure white (#FFFFFF), and deep obsidian slate (#16161E).
 """
 
 import sys
@@ -25,9 +26,9 @@ class TkTimerWindow:
 
         self.root = tk.Tk()
         self.root.title("Timer")
-        self.root.geometry("400x480")
+        self.root.geometry("420x510")
         self.root.resizable(False, False)
-        self.root.configure(bg="#2E3440")
+        self.root.configure(bg="#16161E")
 
         # Handle window close (minimize instead of quit)
         self.root.protocol("WM_DELETE_WINDOW", self.hide)
@@ -38,95 +39,122 @@ class TkTimerWindow:
 
     def _build_ui(self):
         # 1. Header Frame
-        header = tk.Frame(self.root, bg="#3B4252", height=45)
+        header = tk.Frame(self.root, bg="#1A1B26", height=45)
         header.pack(fill=tk.X, side=tk.TOP)
-        lbl_title = tk.Label(header, text="Timer", font=("Helvetica", 14, "bold"), fg="#ECEFF4", bg="#3B4252")
-        lbl_title.pack(side=tk.LEFT, padx=16, pady=8)
+        lbl_title = tk.Label(header, text="Timer", font=("Helvetica", 14, "bold"), fg="#FFFFFF", bg="#1A1B26")
+        lbl_title.pack(side=tk.LEFT, padx=16, pady=10)
 
-        btn_min = tk.Button(header, text="—", font=("Helvetica", 10), fg="#D8DEE9", bg="#4C566A",
-                            relief=tk.FLAT, command=self.hide)
-        btn_min.pack(side=tk.RIGHT, padx=12, pady=8)
+        btn_min = tk.Button(header, text="—", font=("Helvetica", 11, "bold"), fg="#C0CAF5", bg="#24283B",
+                            activebackground="#2F354F", activeforeground="#FFFFFF",
+                            relief=tk.FLAT, bd=0, padx=8, pady=2, command=self.hide)
+        btn_min.pack(side=tk.RIGHT, padx=14, pady=10)
 
         # 2. Main Container
-        main = tk.Frame(self.root, bg="#2E3440")
+        main = tk.Frame(self.root, bg="#16161E")
         main.pack(fill=tk.BOTH, expand=True, padx=20, pady=16)
 
-        # Digital Clock
-        self.lbl_clock = tk.Label(main, text="00:25:00", font=("Courier", 38, "bold"),
-                                  fg="#E95420", bg="#2E3440")
-        self.lbl_clock.pack(pady=(10, 4))
+        # Display Card
+        card = tk.Frame(main, bg="#1F2335", bd=1, relief=tk.SOLID)
+        card.pack(fill=tk.X, pady=(0, 14), ipadx=10, ipady=12)
 
-        self.lbl_status = tk.Label(main, text="Ready", font=("Helvetica", 10),
-                                   fg="#88C0D0", bg="#2E3440")
-        self.lbl_status.pack(pady=(0, 12))
+        # Inner Screen Well
+        screen = tk.Frame(card, bg="#13141F", bd=1, relief=tk.SOLID)
+        screen.pack(fill=tk.X, padx=10, pady=6, ipadx=6, ipady=10)
+
+        # Digital Clock
+        self.lbl_clock = tk.Label(screen, text="00:25:00", font=("Courier", 38, "bold"),
+                                  fg="#FFFFFF", bg="#13141F")
+        self.lbl_clock.pack(pady=(4, 2))
+
+        self.lbl_status = tk.Label(screen, text="○ READY", font=("Helvetica", 10, "bold"),
+                                   fg="#A9B1D6", bg="#13141F")
+        self.lbl_status.pack(pady=(0, 4))
 
         # Action Buttons (Start / Pause / Reset)
-        btn_frame = tk.Frame(main, bg="#2E3440")
-        btn_frame.pack(fill=tk.X, pady=8)
+        btn_frame = tk.Frame(main, bg="#16161E")
+        btn_frame.pack(fill=tk.X, pady=6)
 
         self.btn_toggle = tk.Button(btn_frame, text="▶ Start", font=("Helvetica", 12, "bold"),
-                                    bg="#E95420", fg="#FFFFFF", relief=tk.FLAT, padx=16, pady=8,
+                                    bg="#E95420", fg="#FFFFFF", activebackground="#FF6622",
+                                    activeforeground="#FFFFFF", relief=tk.FLAT, bd=0, padx=16, pady=8,
                                     command=self.controller.on_action_toggle)
         self.btn_toggle.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=4)
 
-        self.btn_reset = tk.Button(btn_frame, text="⏹ Reset", font=("Helvetica", 12),
-                                   bg="#4C566A", fg="#ECEFF4", relief=tk.FLAT, padx=16, pady=8,
+        self.btn_reset = tk.Button(btn_frame, text="⏹ Reset", font=("Helvetica", 12, "bold"),
+                                   bg="#24283B", fg="#C0CAF5", activebackground="#2F354F",
+                                   activeforeground="#FFFFFF", relief=tk.FLAT, bd=0, padx=16, pady=8,
                                    command=self.controller.on_action_reset)
         self.btn_reset.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=4)
 
         # Quick Adjustments (+1m, +5m, +10m)
-        adj_frame = tk.Frame(main, bg="#2E3440")
+        adj_frame = tk.Frame(main, bg="#16161E")
         adj_frame.pack(fill=tk.X, pady=6)
         for text, secs in [("+1m", 60), ("+5m", 300), ("+10m", 600)]:
-            b = tk.Button(adj_frame, text=text, font=("Helvetica", 10), bg="#434C5E", fg="#D8DEE9",
-                          relief=tk.FLAT, command=lambda s=secs: self.engine.add_seconds(s))
+            b = tk.Button(adj_frame, text=text, font=("Helvetica", 10, "bold"),
+                          bg="#24283B", fg="#C0CAF5", activebackground="#2F354F",
+                          activeforeground="#FF8533", relief=tk.FLAT, bd=0, pady=6,
+                          command=lambda s=secs: self.engine.add_seconds(s))
             b.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=3)
 
         # Presets Section
-        lbl_presets = tk.Label(main, text="Quick Presets", font=("Helvetica", 11, "bold"),
-                               fg="#D8DEE9", bg="#2E3440", anchor="w")
-        lbl_presets.pack(fill=tk.X, pady=(12, 6))
+        lbl_presets = tk.Label(main, text="⚡ Quick Presets", font=("Helvetica", 11, "bold"),
+                               fg="#FFFFFF", bg="#16161E", anchor="w")
+        lbl_presets.pack(fill=tk.X, pady=(10, 6))
 
-        pres_grid = tk.Frame(main, bg="#2E3440")
+        pres_grid = tk.Frame(main, bg="#16161E")
         pres_grid.pack(fill=tk.X)
 
         presets = [
-            ("5m", 300), ("10m", 600), ("15m", 900), ("25m 🍅", 1500),
-            ("30m", 1800), ("45m", 2700), ("1h", 3600), ("2h", 7200)
+            ("☕ 5m", 300), ("🍵 10m", 600), ("⚡ 15m", 900), ("🍅 25m", 1500),
+            ("📚 30m", 1800), ("🎯 45m", 2700), ("⏱ 1h", 3600), ("⏳ 2h", 7200)
         ]
         for idx, (label, secs) in enumerate(presets):
             row = idx // 4
             col = idx % 4
-            b = tk.Button(pres_grid, text=label, font=("Helvetica", 9), bg="#3B4252", fg="#ECEFF4",
-                          relief=tk.FLAT, command=lambda s=secs: self._select_preset(s))
+            b = tk.Button(pres_grid, text=label, font=("Helvetica", 9),
+                          bg="#1F2335", fg="#C0CAF5", activebackground="#292E42",
+                          activeforeground="#FFFFFF", relief=tk.FLAT, bd=0, pady=6,
+                          command=lambda s=secs: self._select_preset(s))
             b.grid(row=row, column=col, sticky="nsew", padx=2, pady=2)
             pres_grid.grid_columnconfigure(col, weight=1)
 
         # Custom Time Frame
-        custom_frame = tk.Frame(main, bg="#2E3440")
-        custom_frame.pack(fill=tk.X, pady=(16, 8))
+        custom_frame = tk.Frame(main, bg="#16161E")
+        custom_frame.pack(fill=tk.X, pady=(14, 6))
 
         lbl_custom = tk.Label(custom_frame, text="Set H:M:S:", font=("Helvetica", 10),
-                              fg="#D8DEE9", bg="#2E3440")
+                              fg="#A9B1D6", bg="#16161E")
         lbl_custom.pack(side=tk.LEFT, padx=4)
 
-        self.spin_h = tk.Spinbox(custom_frame, from_=0, to=99, width=3, font=("Helvetica", 11))
+        self.spin_h = tk.Spinbox(custom_frame, from_=0, to=99, width=3, font=("Helvetica", 11),
+                                 bg="#1F2335", fg="#FFFFFF", insertbackground="#FFFFFF", bd=1)
         self.spin_h.pack(side=tk.LEFT, padx=2)
-        self.spin_m = tk.Spinbox(custom_frame, from_=0, to=59, width=3, font=("Helvetica", 11))
+        self.spin_m = tk.Spinbox(custom_frame, from_=0, to=59, width=3, font=("Helvetica", 11),
+                                 bg="#1F2335", fg="#FFFFFF", insertbackground="#FFFFFF", bd=1)
         self.spin_m.pack(side=tk.LEFT, padx=2)
-        self.spin_s = tk.Spinbox(custom_frame, from_=0, to=59, width=3, font=("Helvetica", 11))
+        self.spin_s = tk.Spinbox(custom_frame, from_=0, to=59, width=3, font=("Helvetica", 11),
+                                 bg="#1F2335", fg="#FFFFFF", insertbackground="#FFFFFF", bd=1)
         self.spin_s.pack(side=tk.LEFT, padx=2)
 
         self.spin_h.delete(0, "end"); self.spin_h.insert(0, str(self.engine.initial_duration // 3600))
         self.spin_m.delete(0, "end"); self.spin_m.insert(0, str((self.engine.initial_duration % 3600) // 60))
         self.spin_s.delete(0, "end"); self.spin_s.insert(0, str(self.engine.initial_duration % 60))
 
-        btn_apply = tk.Button(custom_frame, text="Set", font=("Helvetica", 10, "bold"),
-                              bg="#5E81AC", fg="#ECEFF4", relief=tk.FLAT, command=self._on_apply_custom)
+        btn_apply = tk.Button(custom_frame, text="Apply", font=("Helvetica", 10, "bold"),
+                              bg="#24283B", fg="#FF8533", activebackground="#2F354F",
+                              relief=tk.FLAT, bd=0, padx=8, pady=3, command=self._on_apply_custom)
         btn_apply.pack(side=tk.LEFT, padx=6)
 
     def _select_preset(self, seconds):
         self.engine.set_duration(seconds, auto_start=True)
+
+    def on_duration_changed(self, seconds):
+        h = seconds // 3600
+        m = (seconds % 3600) // 60
+        s = seconds % 60
+        self.spin_h.delete(0, "end"); self.spin_h.insert(0, str(h))
+        self.spin_m.delete(0, "end"); self.spin_m.insert(0, str(m))
+        self.spin_s.delete(0, "end"); self.spin_s.insert(0, str(s))
 
     def _on_apply_custom(self):
         try:
@@ -153,17 +181,17 @@ class TkTimerWindow:
 
     def _update_state_ui(self, state):
         if state == TimerState.RUNNING:
-            self.btn_toggle.config(text="⏸ Pause", bg="#A3BE8C", fg="#2E3440")
-            self.lbl_status.config(text="🟢 Running", fg="#A3BE8C")
+            self.btn_toggle.config(text="⏸ Pause", bg="#238636", fg="#FFFFFF", activebackground="#2EA043")
+            self.lbl_status.config(text="● RUNNING", fg="#3FB950")
         elif state == TimerState.PAUSED:
-            self.btn_toggle.config(text="▶ Resume", bg="#EBCB8B", fg="#2E3440")
-            self.lbl_status.config(text="⏸ Paused", fg="#EBCB8B")
+            self.btn_toggle.config(text="▶ Resume", bg="#E95420", fg="#FFFFFF", activebackground="#FF6622")
+            self.lbl_status.config(text="❚❚ PAUSED", fg="#FF8533")
         elif state == TimerState.FINISHED:
-            self.btn_toggle.config(text="▶ Restart", bg="#BF616A", fg="#FFFFFF")
-            self.lbl_status.config(text="🔔 Finished!", fg="#BF616A")
+            self.btn_toggle.config(text="▶ Restart", bg="#E95420", fg="#FFFFFF", activebackground="#FF6622")
+            self.lbl_status.config(text="🔔 TIME'S UP!", fg="#F7768E")
         else:
-            self.btn_toggle.config(text="▶ Start", bg="#E95420", fg="#FFFFFF")
-            self.lbl_status.config(text="⚪ Ready", fg="#88C0D0")
+            self.btn_toggle.config(text="▶ Start", bg="#E95420", fg="#FFFFFF", activebackground="#FF6622")
+            self.lbl_status.config(text="○ READY", fg="#A9B1D6")
 
     def show(self):
         self.root.deiconify()

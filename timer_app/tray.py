@@ -66,13 +66,47 @@ def create_tray(controller):
         class PystrayTray(BaseTray):
             def __init__(self, ctrl):
                 super().__init__(ctrl)
+                self.ctrl = ctrl
                 icon_path = str(ctrl.assets_dir / "timer.png")
                 self.icon = pystray.Icon("timer", Image.open(icon_path), "Timer: 00:25:00")
+                self._update_menu()
+
+            def _update_menu(self):
+                engine = self.ctrl.engine
+                state = engine.state
+                if state == TimerState.RUNNING:
+                    action_label = "⏸ Pause Timer"
+                elif state == TimerState.PAUSED:
+                    action_label = "▶ Resume Timer"
+                elif state == TimerState.FINISHED:
+                    action_label = "▶ Restart Timer"
+                else:
+                    action_label = "▶ Start Timer"
+
+                sound_enabled = self.controller.config.get("sound_enabled", True)
+                sound_label = f"🔔 Sound Alert ({'ON' if sound_enabled else 'OFF'})"
+                autostart_active = self.controller.is_autostart_enabled()
+                autostart_label = f"🚀 Start on Login ({'ON' if autostart_active else 'OFF'})"
+
                 self.icon.menu = pystray.Menu(
-                    pystray.MenuItem("Open Timer", self.controller.show_window),
-                    pystray.MenuItem("Toggle", self.controller.on_action_toggle),
-                    pystray.MenuItem("Reset", self.controller.on_action_reset),
-                    pystray.MenuItem("Quit", self.controller.quit_app)
+                    pystray.MenuItem("🎛 Open Timer Window", self.controller.show_window),
+                    pystray.MenuItem(action_label, self.controller.on_action_toggle),
+                    pystray.MenuItem("⏹ Reset Timer", self.controller.on_action_reset),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem("➕ Add 1 Minute", lambda: engine.add_seconds(60)),
+                    pystray.MenuItem("➕ Add 5 Minutes", lambda: engine.add_seconds(300)),
+                    pystray.MenuItem("➕ Add 10 Minutes", lambda: engine.add_seconds(600)),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem("☕ 5 Min (Break)", lambda: engine.set_duration(300, auto_start=True)),
+                    pystray.MenuItem("⚡ 15 Minutes", lambda: engine.set_duration(900, auto_start=True)),
+                    pystray.MenuItem("🍅 25 Min (Pomodoro)", lambda: engine.set_duration(1500, auto_start=True)),
+                    pystray.MenuItem("🎯 45 Min (Deep Work)", lambda: engine.set_duration(2700, auto_start=True)),
+                    pystray.MenuItem("⏱ 1 Hour", lambda: engine.set_duration(3600, auto_start=True)),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(sound_label, self.controller.toggle_sound),
+                    pystray.MenuItem(autostart_label, self.controller.toggle_autostart),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem("❌ Quit", self.controller.quit_app)
                 )
 
             def register(self):
@@ -80,6 +114,9 @@ def create_tray(controller):
 
             def update_label(self, formatted_time):
                 self.icon.title = f"Timer: {formatted_time}"
+
+            def refresh_menu(self):
+                self._update_menu()
 
         tray = PystrayTray(controller)
         tray.register()
