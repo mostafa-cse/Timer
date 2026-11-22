@@ -140,5 +140,11 @@ Timer/
 
 ---
 
+## 👤 Author & Contributor
+
+* **Mostafa Kamal** ([@mostafa-cse](https://github.com/mostafa-cse)) — Creator & Lead Maintainer
+
+---
+
 ## 📄 License
 This project is licensed under the [MIT License](LICENSE).
